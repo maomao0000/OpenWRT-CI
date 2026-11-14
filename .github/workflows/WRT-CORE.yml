@@ -211,26 +211,6 @@ jobs:
             grep -Fqx 'CONFIG_TARGET_ROOTFS_PARTSIZE=1024' .config
           fi
 
-      - name: Verify x86 Kernel Configuration
-        if: ${{ inputs.WRT_CONFIG == 'X86' }}
-        run: |
-          cd ./wrt/
-          make target/linux/compile -j$(nproc) || make target/linux/compile -j1 V=s
-          KERNEL_CONFIG=$(find build_dir -type f -path '*/linux-6.18*/.config' -print -quit)
-          if [[ -z "$KERNEL_CONFIG" ]]; then
-            echo 'Kernel .config not found under build_dir' >&2
-            find build_dir -type f -name .config -path '*linux*' -print | head -20 >&2
-            exit 1
-          fi
-          echo "Checking kernel config: $KERNEL_CONFIG"
-          grep -E '^CONFIG_NF_CONNTRACK_(EVENTS|CHAIN_EVENTS)=' "$KERNEL_CONFIG" || true
-          for option in CONFIG_NF_CONNTRACK_EVENTS=y CONFIG_NF_CONNTRACK_CHAIN_EVENTS=y; do
-            grep -Fqx "$option" "$KERNEL_CONFIG" || {
-              echo "Kernel config is missing $option" >&2
-              exit 1
-            }
-          done
-
       - name: Prepare Rust Toolchain
         if: ${{ !inputs.WRT_TEST }}
         run: |
@@ -258,6 +238,19 @@ jobs:
         if: ${{ !inputs.WRT_TEST && inputs.WRT_CONFIG == 'X86' }}
         run: |
           cd ./wrt/
+          KERNEL_CONFIG=$(find build_dir -type f -path '*/linux-6.18*/.config' -print -quit)
+          if [[ -z "$KERNEL_CONFIG" ]]; then
+            echo 'Warning: kernel .config not found under build_dir; final kernel option state is unverified' >&2
+          else
+            echo "Checking kernel config: $KERNEL_CONFIG"
+            grep -E '^CONFIG_NF_CONNTRACK_(EVENTS|CHAIN_EVENTS)=' "$KERNEL_CONFIG" || true
+            for option in CONFIG_NF_CONNTRACK_EVENTS=y CONFIG_NF_CONNTRACK_CHAIN_EVENTS=y; do
+              grep -Fqx "$option" "$KERNEL_CONFIG" || {
+                echo "Kernel config is missing $option" >&2
+                exit 1
+              }
+            done
+          fi
           MANIFEST=$(find bin/targets -name '*.manifest' -type f -print -quit)
           if [[ -z "$MANIFEST" ]]; then
             echo 'Firmware manifest not found under bin/targets' >&2

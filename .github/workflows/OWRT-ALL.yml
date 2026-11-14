@@ -19,7 +19,7 @@ on:
         required: false
         type: string
       TEST:
-        description: '验证配置与内核，不编译完整固件。'
+        description: '仅输出配置文件，不编译固件。'
         default: false
         required: false
         type: boolean
