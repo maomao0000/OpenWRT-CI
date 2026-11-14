@@ -11,6 +11,14 @@ git rev-parse HEAD > "$REPORT_DIR/source-commit.txt"
 if [ -f .config ]; then
 	cp .config "$REPORT_DIR/config.txt"
 fi
+KERNEL_CONFIG=$(find build_dir -type f -path '*/linux-6.18*/.config' -print -quit)
+if [ -n "$KERNEL_CONFIG" ]; then
+	cp "$KERNEL_CONFIG" "$REPORT_DIR/kernel-config.txt"
+fi
+MANIFEST=$(find bin/targets -name '*.manifest' -type f -print -quit)
+if [ -n "$MANIFEST" ]; then
+	cp "$MANIFEST" "$REPORT_DIR/firmware.manifest"
+fi
 ./scripts/feeds list -fs > "$REPORT_DIR/feeds.buildinfo"
 
 REPORT_PATHS=$(make --no-print-directory -s -f - TOPDIR="$PWD" ci-report-paths <<'MAKE'
