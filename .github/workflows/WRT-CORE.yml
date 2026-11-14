@@ -168,6 +168,8 @@ jobs:
 
           if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
             cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt >> .config
+          elif [[ "$WRT_CONFIG" == "X86" ]]; then
+            cat $GITHUB_WORKSPACE/Config/GENERAL.txt $GITHUB_WORKSPACE/Config/X86.txt >> .config
           else
             cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt $GITHUB_WORKSPACE/Config/GENERAL.txt >> .config
           fi
@@ -175,6 +177,17 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Settings.sh
 
           make defconfig -j$(nproc) && make clean -j$(nproc)
+
+          if [[ "$WRT_CONFIG" == "X86" ]]; then
+            for package in nlbwmon luci-app-nlbwmon nikki luci-app-nikki mosdns luci-app-mosdns adguardhome luci-app-adguardhome zerotier luci-app-zerotier; do
+              grep -Fqx "CONFIG_PACKAGE_${package}=y" .config || {
+                echo "Required x86 package missing after defconfig: $package" >&2
+                exit 1
+              }
+            done
+            grep -Fqx 'CONFIG_TARGET_KERNEL_PARTSIZE=512' .config
+            grep -Fqx 'CONFIG_TARGET_ROOTFS_PARTSIZE=2048' .config
+          fi
 
       - name: Download Packages
         if: env.WRT_TEST != 'true'
