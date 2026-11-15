@@ -11,7 +11,7 @@ git rev-parse HEAD > "$REPORT_DIR/source-commit.txt"
 if [ -f .config ]; then
 	cp .config "$REPORT_DIR/config.txt"
 fi
-KERNEL_CONFIG=$(find build_dir -type f -path '*/linux-6.18*/.config' -print -quit)
+KERNEL_CONFIG=$(find build_dir/target-* -type f -path '*/linux-x86_64/linux-6.18*/.config' -print -quit)
 if [ -n "$KERNEL_CONFIG" ]; then
 	cp "$KERNEL_CONFIG" "$REPORT_DIR/kernel-config.txt"
 fi

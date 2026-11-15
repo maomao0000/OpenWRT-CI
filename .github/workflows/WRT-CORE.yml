@@ -238,9 +238,10 @@ jobs:
         if: ${{ !inputs.WRT_TEST && inputs.WRT_CONFIG == 'X86' }}
         run: |
           cd ./wrt/
-          KERNEL_CONFIG=$(find build_dir -type f -path '*/linux-6.18*/.config' -print -quit)
+          KERNEL_CONFIG=$(find build_dir/target-* -type f -path '*/linux-x86_64/linux-6.18*/.config' -print -quit)
           if [[ -z "$KERNEL_CONFIG" ]]; then
-            echo 'Warning: kernel .config not found under build_dir; final kernel option state is unverified' >&2
+            echo 'Target x86_64 kernel .config not found under build_dir' >&2
+            exit 1
           else
             echo "Checking kernel config: $KERNEL_CONFIG"
             grep -E '^CONFIG_NF_CONNTRACK_(EVENTS|CHAIN_EVENTS)=' "$KERNEL_CONFIG" || true
